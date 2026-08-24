@@ -36,20 +36,28 @@ export const getPrisma = async () => {
   }
 
   console.log("createClient called with URL:", url, "Type:", typeof url);
+  if (!url) {
+    throw new Error("FATAL: Database URL is missing! Please make sure TURSO_DATABASE_URL is set in your Cloudflare environment variables/secrets.");
+  }
+  
   if (typeof process !== 'undefined' && process.env) {
     process.env['DATABASE_URL'] = url;
     process.env['TURSO_DATABASE_URL'] = url;
     process.env['TURSO_AUTH_TOKEN'] = authToken;
   }
   
-  const adapter = new PrismaLibSql({
-    url: url as string,
-    authToken: authToken as string
-  });
-  
-  cachedPrisma = new PrismaClient({ adapter });
-  
-  return cachedPrisma;
+  try {
+    const adapter = new PrismaLibSql({
+      url: url as string,
+      authToken: authToken as string
+    });
+    
+    cachedPrisma = new PrismaClient({ adapter });
+    return cachedPrisma;
+  } catch (error: any) {
+    console.error("Prisma Initialization Error:", error);
+    throw new Error(`Prisma Init Error: ${error.message} | URL: ${url ? 'Found' : 'Missing'}`);
+  }
 };
 
 if (process.env.NODE_ENV !== 'production') {
