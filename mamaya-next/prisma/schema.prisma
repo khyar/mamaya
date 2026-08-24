@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("customer") // "customer", "admin"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+// ----------------- FOOD DOMAIN -----------------
+
+model Batch {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  open_date     DateTime
+  close_date    DateTime
+  delivery_date DateTime
+  is_active     Boolean  @default(true)
+  status        String   @default("open") // "open", "closed", "delivered"
+  createdAt     DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  products    Product[]
+  orders      Order[]
+}
+
+model MasterProduct {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  base_price  Float
+  image       String?
+  is_active   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  stock       Int      @default(0)
+  image       String?
+  batchId     String?
+  batch       Batch?   @relation(fields: [batchId], references: [id])
+  is_active   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orderItems  OrderItem[]
+}
+
+// ----------------- TICKETS DOMAIN -----------------
+
+model TicketEvent {
+  id                   String           @id @default(cuid())
+  name                 String
+  slug                 String           @unique
+  description          String?
+  venue                String?
+  war_start_time       DateTime?
+  war_end_time         DateTime?
+  event_date           DateTime?
+  banner_image         String?
+  seating_plan_image   String?
+  terms                String?
+  max_tickets_per_user Int?             @default(4)
+  is_active            Boolean          @default(true)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  categories           TicketCategory[]
+  orders               Order[]
+}
+
+model TicketCategory {
+  id              String      @id @default(cuid())
+  event_id        String
+  event           TicketEvent @relation(fields: [event_id], references: [id])
+  name            String
+  price           Float
+  quota           Int         @default(0)
+  available_quota Int         @default(0)
+  is_active       Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  orderItems      OrderItem[]
+}
+
+// ----------------- JASTIP DOMAIN -----------------
+
+model JastipTrip {
+  id               String          @id @default(cuid())
+  destination      String
+  slug             String          @unique
+  departure_date   DateTime?
+  return_date      DateTime?
+  po_close_date    DateTime?
+  baggage_quota_kg Float?
+  description      String?
+  is_active        Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  catalogs         JastipCatalog[]
+  orders           Order[]
+}
+
+model JastipCatalog {
+  id              String      @id @default(cuid())
+  trip_id         String
+  trip            JastipTrip  @relation(fields: [trip_id], references: [id])
+  name            String
+  estimated_price Float?
+  reference_url   String?
+  image           String?
+  is_active       Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  orderItems      OrderItem[]
+}
+
+// ----------------- PROMOS & CAMPAIGNS -----------------
+
+model Promo {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  discount_type  String   // "percentage", "fixed"
+  discount_value Float
+  min_purchase   Float?
+  max_discount   Float?
+  valid_from     DateTime?
+  valid_until    DateTime?
+  quota          Int?
+  used_count     Int      @default(0)
+  is_active      Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  orders         Order[]
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  banner      String?
+  is_active   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ----------------- ORDER MANAGEMENT -----------------
+
+model Order {
+  id               String   @id
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  
+  // Type of order (food, ticket, jastip)
+  order_type       String   @default("food") 
+  status           String   @default("pending") // pending, awaiting_shipping_cost, awaiting_payment, processing, ready, completed, cancelled
+  
+  // Relations depending on order_type
+  batchId          String?
+  batch            Batch?   @relation(fields: [batchId], references: [id])
+  ticketEventId    String?
+  ticketEvent      TicketEvent? @relation(fields: [ticketEventId], references: [id])
+  jastipTripId     String?
+  jastipTrip       JastipTrip? @relation(fields: [jastipTripId], references: [id])
+
+  // Financials
+  subtotal         Float
+  discount_amount  Float    @default(0)
+  promo_id         String?
+  promo            Promo?   @relation(fields: [promo_id], references: [id])
+  promo_code_used  String?
+  shipping_cost    Float?
+  grand_total      Float?
+  
+  // Customer Info (Guest Checkout)
+  customer_name    String
+  customer_phone   String
+  customer_ktp     String?
+  customer_address String?
+  shipping_method  String?  // "pickup", "delivery"
+  notes            String?
+
+  paid_at          DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  items            OrderItem[]
+}
+
+model OrderItem {
+  id               String   @id @default(cuid())
+  orderId          String
+  order            Order    @relation(fields: [orderId], references: [id])
+  
+  // Polymorphic-like relationships
+  productId        String?
+  product          Product? @relation(fields: [productId], references: [id])
+  
+  ticketCategoryId String?
+  ticketCategory   TicketCategory? @relation(fields: [ticketCategoryId], references: [id])
+  
+  jastipCatalogId  String?
+  jastipCatalog    JastipCatalog? @relation(fields: [jastipCatalogId], references: [id])
+
+  // Generic item info (bisa juga barang request manual jastip yang tidak ada di catalog)
+  product_name     String
+  quantity         Int
+  price            Float
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
