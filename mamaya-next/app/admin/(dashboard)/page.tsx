@@ -1,17 +1,17 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 
 export default async function AdminDashboardPage() {
   const session = await getAdminSession();
 
   // Basic stats
-  const totalOrders = await prisma.order.count();
-  const pendingOrders = await prisma.order.count({ where: { status: 'awaiting_payment' } });
-  const processingOrders = await prisma.order.count({ where: { status: 'processing' } });
-  const completedOrders = await prisma.order.count({ where: { status: 'completed' } });
+  const totalOrders = await (await getPrisma()).order.count();
+  const pendingOrders = await (await getPrisma()).order.count({ where: { status: 'awaiting_payment' } });
+  const processingOrders = await (await getPrisma()).order.count({ where: { status: 'processing' } });
+  const completedOrders = await (await getPrisma()).order.count({ where: { status: 'completed' } });
 
   // Income sum (from completed orders)
-  const completedStats = await prisma.order.aggregate({
+  const completedStats = await (await getPrisma()).order.aggregate({
     where: { status: 'completed' },
     _sum: { grand_total: true, subtotal: true }
   });

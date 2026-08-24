@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import AddToCartButton from '@/components/AddToCartButton';
 
 export default async function FoodPage() {
-  const activeBatches = await prisma.batch.findMany({
+  const activeBatches = await (await getPrisma()).batch.findMany({
     where: { 
        is_active: true,
        open_date: { lte: new Date() },

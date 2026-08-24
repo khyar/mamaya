@@ -1,6 +1,6 @@
 'use server';
 
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { createAdminSession, clearAdminSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
@@ -13,12 +13,12 @@ export async function loginAction(formData: FormData) {
   }
 
   // Admin seed fallback: if no admin exists, create one with default password
-  let user = await prisma.user.findFirst({
+  let user = await (await getPrisma()).user.findFirst({
     where: { email }
   });
 
   if (!user && email === 'admin@mamaya.id' && password === 'password') {
-    user = await prisma.user.create({
+    user = await (await getPrisma()).user.create({
       data: {
         name: 'Administrator',
         email: 'admin@mamaya.id',

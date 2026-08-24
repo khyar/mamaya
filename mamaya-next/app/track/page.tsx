@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import Link from 'next/link';
 
 export default async function TrackPage({
@@ -14,7 +14,7 @@ export default async function TrackPage({
 
   if (orderId) {
     try {
-      order = await prisma.order.findUnique({
+      order = await (await getPrisma()).order.findUnique({
         where: { id: orderId.toUpperCase() },
         include: {
           items: {

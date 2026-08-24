@@ -1,11 +1,11 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import JastipRequestForm from '@/components/JastipRequestForm';
 
 export default async function JastipTripPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   
-  const trip = await prisma.jastipTrip.findUnique({
+  const trip = await (await getPrisma()).jastipTrip.findUnique({
     where: { slug },
     include: { 
       catalogs: {

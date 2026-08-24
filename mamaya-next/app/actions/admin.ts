@@ -1,6 +1,6 @@
 'use server';
 
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
@@ -10,7 +10,7 @@ export async function updateOrderStatus(orderId: string, status: string) {
     throw new Error('Unauthorized');
   }
 
-  await prisma.order.update({
+  await (await getPrisma()).order.update({
     where: { id: orderId },
     data: { status }
   });

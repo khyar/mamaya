@@ -1,11 +1,11 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import TicketCheckoutForm from '@/components/TicketCheckoutForm';
 
 export default async function TicketEventPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   
-  const event = await prisma.ticketEvent.findUnique({
+  const event = await (await getPrisma()).ticketEvent.findUnique({
     where: { slug },
     include: { 
       categories: {

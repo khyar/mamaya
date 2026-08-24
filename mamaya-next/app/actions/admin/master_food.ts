@@ -1,6 +1,6 @@
 'use server';
 
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
@@ -19,7 +19,7 @@ export async function createMasterProduct(data: FormData) {
   const base_price = parseFloat(data.get('base_price') as string);
   const image = data.get('image') as string || '/images/placeholder-food.jpg';
 
-  await prisma.masterProduct.create({
+  await (await getPrisma()).masterProduct.create({
     data: {
       name,
       description,
@@ -34,7 +34,7 @@ export async function createMasterProduct(data: FormData) {
 
 export async function toggleMasterProductStatus(id: string, currentStatus: boolean) {
   await checkAdmin();
-  await prisma.masterProduct.update({
+  await (await getPrisma()).masterProduct.update({
     where: { id },
     data: { is_active: !currentStatus }
   });

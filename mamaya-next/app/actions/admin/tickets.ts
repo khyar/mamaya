@@ -1,6 +1,6 @@
 'use server';
 
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
@@ -13,7 +13,7 @@ async function checkAdmin() {
 
 export async function toggleEventStatus(eventId: string, currentStatus: boolean) {
   await checkAdmin();
-  await prisma.ticketEvent.update({
+  await (await getPrisma()).ticketEvent.update({
     where: { id: eventId },
     data: { is_active: !currentStatus }
   });
@@ -38,7 +38,7 @@ export async function createEvent(data: FormData) {
   const seating_plan_image = data.get('seating_plan_image') as string || '';
   const max_tickets_per_user = parseInt(data.get('max_tickets_per_user') as string, 10) || 4;
 
-  await prisma.ticketEvent.create({
+  await (await getPrisma()).ticketEvent.create({
     data: {
       name,
       slug,
@@ -60,7 +60,7 @@ export async function createEvent(data: FormData) {
 
 export async function toggleCategoryStatus(categoryId: string, currentStatus: boolean, eventId: string) {
   await checkAdmin();
-  await prisma.ticketCategory.update({
+  await (await getPrisma()).ticketCategory.update({
     where: { id: categoryId },
     data: { is_active: !currentStatus }
   });
@@ -75,7 +75,7 @@ export async function createCategory(data: FormData) {
   const price = parseFloat(data.get('price') as string);
   const quota = parseInt(data.get('quota') as string, 10);
 
-  await prisma.ticketCategory.create({
+  await (await getPrisma()).ticketCategory.create({
     data: {
       event_id,
       name,

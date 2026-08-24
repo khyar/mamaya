@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { toggleCatalogStatus, createCatalog } from '@/app/actions/admin/jastip';
@@ -7,7 +7,7 @@ import { ArrowLeft, Plus, Power, Link as LinkIcon } from 'lucide-react';
 export default async function AdminTripDetailPage({ params }: { params: Promise<{ tripId: string }> }) {
   const { tripId } = await params;
   
-  const trip = await prisma.jastipTrip.findUnique({
+  const trip = await (await getPrisma()).jastipTrip.findUnique({
     where: { id: tripId },
     include: { catalogs: { orderBy: { createdAt: 'desc' } } }
   });

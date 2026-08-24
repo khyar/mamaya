@@ -1,6 +1,6 @@
 'use server';
 
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
@@ -13,7 +13,7 @@ async function checkAdmin() {
 
 export async function toggleBatchStatus(batchId: string, currentStatus: boolean) {
   await checkAdmin();
-  await prisma.batch.update({
+  await (await getPrisma()).batch.update({
     where: { id: batchId },
     data: { is_active: !currentStatus }
   });
@@ -30,7 +30,7 @@ export async function createBatch(data: FormData) {
   const close_date = new Date(data.get('close_date') as string);
   const delivery_date = new Date(data.get('delivery_date') as string);
 
-  await prisma.batch.create({
+  await (await getPrisma()).batch.create({
     data: {
       name,
       description,
@@ -47,7 +47,7 @@ export async function createBatch(data: FormData) {
 
 export async function toggleProductStatus(productId: string, currentStatus: boolean, batchId: string) {
   await checkAdmin();
-  await prisma.product.update({
+  await (await getPrisma()).product.update({
     where: { id: productId },
     data: { is_active: !currentStatus }
   });
@@ -67,7 +67,7 @@ export async function createProduct(data: FormData) {
   // For now, we just use a placeholder or string
   const image = data.get('image') as string || '/images/placeholder-food.jpg';
 
-  await prisma.product.create({
+  await (await getPrisma()).product.create({
     data: {
       batchId,
       name,

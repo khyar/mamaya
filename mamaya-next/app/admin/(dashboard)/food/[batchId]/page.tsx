@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { toggleProductStatus } from '@/app/actions/admin/food';
@@ -8,12 +8,12 @@ import AddProductForm from './AddProductForm';
 export default async function AdminBatchDetailPage({ params }: { params: Promise<{ batchId: string }> }) {
   const { batchId } = await params;
   
-  const batch = await prisma.batch.findUnique({
+  const batch = await (await getPrisma()).batch.findUnique({
     where: { id: batchId },
     include: { products: { orderBy: { createdAt: 'desc' } } }
   });
 
-  const masterProducts = await prisma.masterProduct.findMany({
+  const masterProducts = await (await getPrisma()).masterProduct.findMany({
     where: { is_active: true },
     orderBy: { name: 'asc' }
   });

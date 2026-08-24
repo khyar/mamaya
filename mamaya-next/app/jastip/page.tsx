@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 
 export default async function JastipPage() {
-  const trips = await prisma.jastipTrip.findMany({
+  const trips = await (await getPrisma()).jastipTrip.findMany({
     where: { is_active: true }
   });
 

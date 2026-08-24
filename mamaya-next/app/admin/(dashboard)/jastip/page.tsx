@@ -1,10 +1,10 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { toggleTripStatus, createTrip } from '@/app/actions/admin/jastip';
 import { Plus, Power } from 'lucide-react';
 
 export default async function AdminJastipPage() {
-  const trips = await prisma.jastipTrip.findMany({
+  const trips = await (await getPrisma()).jastipTrip.findMany({
     orderBy: { createdAt: 'desc' },
     include: { _count: { select: { catalogs: true } } }
   });

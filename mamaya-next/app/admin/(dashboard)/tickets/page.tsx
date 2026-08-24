@@ -1,10 +1,10 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { toggleEventStatus, createEvent } from '@/app/actions/admin/tickets';
 import { Plus, Power } from 'lucide-react';
 
 export default async function AdminTicketsPage() {
-  const events = await prisma.ticketEvent.findMany({
+  const events = await (await getPrisma()).ticketEvent.findMany({
     orderBy: { createdAt: 'desc' },
     include: { _count: { select: { categories: true } } }
   });

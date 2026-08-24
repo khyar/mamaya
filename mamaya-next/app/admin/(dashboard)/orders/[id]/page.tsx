@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import StatusSelect from './StatusSelect';
@@ -7,7 +7,7 @@ import { ArrowLeft, User, MapPin, Receipt, Phone, FileText } from 'lucide-react'
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   
-  const order = await prisma.order.findUnique({
+  const order = await (await getPrisma()).order.findUnique({
     where: { id },
     include: { items: true }
   });

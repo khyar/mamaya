@@ -1,6 +1,6 @@
 'use server';
 
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
@@ -13,7 +13,7 @@ async function checkAdmin() {
 
 export async function toggleTripStatus(tripId: string, currentStatus: boolean) {
   await checkAdmin();
-  await prisma.jastipTrip.update({
+  await (await getPrisma()).jastipTrip.update({
     where: { id: tripId },
     data: { is_active: !currentStatus }
   });
@@ -34,7 +34,7 @@ export async function createTrip(data: FormData) {
   
   const baggage_quota_kg = parseFloat(data.get('baggage_quota_kg') as string);
 
-  await prisma.jastipTrip.create({
+  await (await getPrisma()).jastipTrip.create({
     data: {
       destination,
       slug,
@@ -52,7 +52,7 @@ export async function createTrip(data: FormData) {
 
 export async function toggleCatalogStatus(catalogId: string, currentStatus: boolean, tripId: string) {
   await checkAdmin();
-  await prisma.jastipCatalog.update({
+  await (await getPrisma()).jastipCatalog.update({
     where: { id: catalogId },
     data: { is_active: !currentStatus }
   });
@@ -68,7 +68,7 @@ export async function createCatalog(data: FormData) {
   const reference_url = data.get('reference_url') as string;
   const image = data.get('image') as string || '/images/portal/jastip.jpg';
 
-  await prisma.jastipCatalog.create({
+  await (await getPrisma()).jastipCatalog.create({
     data: {
       trip_id,
       name,

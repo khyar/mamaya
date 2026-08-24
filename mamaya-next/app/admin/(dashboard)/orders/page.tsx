@@ -1,8 +1,8 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import Link from 'next/link';
 
 export default async function AdminOrdersPage() {
-  const orders = await prisma.order.findMany({
+  const orders = await (await getPrisma()).order.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
       items: true

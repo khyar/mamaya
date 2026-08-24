@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { toggleCategoryStatus, createCategory } from '@/app/actions/admin/tickets';
@@ -7,7 +7,7 @@ import { ArrowLeft, Plus, Power } from 'lucide-react';
 export default async function AdminEventDetailPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;
   
-  const event = await prisma.ticketEvent.findUnique({
+  const event = await (await getPrisma()).ticketEvent.findUnique({
     where: { id: eventId },
     include: { categories: { orderBy: { price: 'desc' } } }
   });

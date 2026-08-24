@@ -1,10 +1,10 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { toggleBatchStatus, createBatch } from '@/app/actions/admin/food';
 import { Plus, Power } from 'lucide-react';
 
 export default async function AdminFoodPage() {
-  const batches = await prisma.batch.findMany({
+  const batches = await (await getPrisma()).batch.findMany({
     orderBy: { createdAt: 'desc' },
     include: { _count: { select: { products: true } } }
   });

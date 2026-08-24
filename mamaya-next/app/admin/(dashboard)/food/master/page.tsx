@@ -1,10 +1,10 @@
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { createMasterProduct, toggleMasterProductStatus } from '@/app/actions/admin/master_food';
 import { ArrowLeft, Plus, Power } from 'lucide-react';
 
 export default async function AdminMasterFoodPage() {
-  const masterProducts = await prisma.masterProduct.findMany({
+  const masterProducts = await (await getPrisma()).masterProduct.findMany({
     orderBy: { createdAt: 'desc' }
   });
 

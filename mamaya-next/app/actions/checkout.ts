@@ -1,6 +1,6 @@
 'use server';
 
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function checkoutAction(data: {
@@ -19,12 +19,12 @@ export async function checkoutAction(data: {
     const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
     // Guest user creation
-    let user = await prisma.user.findFirst({
+    let user = await (await getPrisma()).user.findFirst({
       where: { name, email: `${phone}@guest.mamaya.id` }
     });
 
     if (!user) {
-      user = await prisma.user.create({
+      user = await (await getPrisma()).user.create({
         data: {
           name,
           email: `${phone}@guest.mamaya.id`,
@@ -44,7 +44,7 @@ export async function checkoutAction(data: {
       const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
       orderId = `FOD-${dateStr}-${randomPart}`;
       
-      const existing = await prisma.order.findUnique({
+      const existing = await (await getPrisma()).order.findUnique({
         where: { id: orderId }
       });
       
@@ -54,7 +54,7 @@ export async function checkoutAction(data: {
     }
 
     // Create Order with Items
-    const order = await prisma.order.create({
+    const order = await (await getPrisma()).order.create({
       data: {
         id: orderId,
         userId: user.id,
@@ -105,7 +105,7 @@ export async function checkoutTicketAction(data: {
       throw new Error("Maksimal pembelian adalah 4 tiket.");
     }
     
-    const event = await prisma.ticketEvent.findUnique({ where: { id: eventId } });
+    const event = await (await getPrisma()).ticketEvent.findUnique({ where: { id: eventId } });
     if (!event) throw new Error("Event tidak ditemukan");
     
     const now = new Date();
@@ -118,12 +118,12 @@ export async function checkoutTicketAction(data: {
 
     const subtotal = price * quantity;
 
-    let user = await prisma.user.findFirst({
+    let user = await (await getPrisma()).user.findFirst({
       where: { name, email: `${phone}@guest.mamaya.id` }
     });
 
     if (!user) {
-      user = await prisma.user.create({
+      user = await (await getPrisma()).user.create({
         data: {
           name,
           email: `${phone}@guest.mamaya.id`,
@@ -141,13 +141,13 @@ export async function checkoutTicketAction(data: {
       const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
       orderId = `TIX-${dateStr}-${randomPart}`;
       
-      const existing = await prisma.order.findUnique({
+      const existing = await (await getPrisma()).order.findUnique({
         where: { id: orderId }
       });
       if (!existing) isUnique = true;
     }
 
-    const order = await prisma.order.create({
+    const order = await (await getPrisma()).order.create({
       data: {
         id: orderId,
         userId: user.id,
@@ -171,7 +171,7 @@ export async function checkoutTicketAction(data: {
     });
 
     // Kurangi kuota
-    await prisma.ticketCategory.update({
+    await (await getPrisma()).ticketCategory.update({
       where: { id: categoryId },
       data: {
         available_quota: {
@@ -199,17 +199,17 @@ export async function requestJastipAction(data: {
   try {
     const { name, phone, shippingAddress, requestNote, tripId, catalogs } = data;
     
-    const trip = await prisma.jastipTrip.findUnique({ where: { id: tripId } });
+    const trip = await (await getPrisma()).jastipTrip.findUnique({ where: { id: tripId } });
     if (!trip || !trip.is_active || (trip.po_close_date && new Date() > trip.po_close_date)) {
       throw new Error("PO Jastip untuk trip ini sudah ditutup.");
     }
 
-    let user = await prisma.user.findFirst({
+    let user = await (await getPrisma()).user.findFirst({
       where: { name, email: `${phone}@guest.mamaya.id` }
     });
 
     if (!user) {
-      user = await prisma.user.create({
+      user = await (await getPrisma()).user.create({
         data: {
           name,
           email: `${phone}@guest.mamaya.id`,
@@ -227,13 +227,13 @@ export async function requestJastipAction(data: {
       const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
       orderId = `JST-${dateStr}-${randomPart}`;
       
-      const existing = await prisma.order.findUnique({
+      const existing = await (await getPrisma()).order.findUnique({
         where: { id: orderId }
       });
       if (!existing) isUnique = true;
     }
 
-    const order = await prisma.order.create({
+    const order = await (await getPrisma()).order.create({
       data: {
         id: orderId,
         userId: user.id,
@@ -285,12 +285,12 @@ export async function globalCheckoutAction(data: {
   const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   // 1. Guest User
-  let user = await prisma.user.findFirst({
+  let user = await (await getPrisma()).user.findFirst({
     where: { name, email: `${phone}@guest.mamaya.id` }
   });
 
   if (!user) {
-    user = await prisma.user.create({
+    user = await (await getPrisma()).user.create({
       data: {
         name,
         email: `${phone}@guest.mamaya.id`,
@@ -338,14 +338,14 @@ export async function globalCheckoutAction(data: {
   const ticketItems = items.filter(i => i.domain === 'ticket');
   if (ticketItems.length > 0) {
      for (const ticket of ticketItems) {
-       const cat = await prisma.ticketCategory.findUnique({ where: { id: ticket.id }, include: { event: true } });
+       const cat = await (await getPrisma()).ticketCategory.findUnique({ where: { id: ticket.id }, include: { event: true } });
        if (!cat) throw new Error(`Kategori tiket ${ticket.name} tidak ditemukan.`);
        if (cat.available_quota < ticket.quantity) throw new Error(`Kuota tiket ${cat.name} tidak mencukupi.`);
        const now = new Date();
        if (cat.event.war_start_time && now < cat.event.war_start_time) throw new Error("Penjualan tiket belum dimulai.");
        if (cat.event.war_end_time && now > cat.event.war_end_time) throw new Error("Penjualan tiket sudah ditutup.");
        
-       await prisma.ticketCategory.update({
+       await (await getPrisma()).ticketCategory.update({
          where: { id: ticket.id },
          data: { available_quota: { decrement: ticket.quantity } }
        });
@@ -355,14 +355,14 @@ export async function globalCheckoutAction(data: {
   // 7. Check jastip trip
   const jastipItems = items.filter(i => i.domain === 'jastip');
   if (jastipItems.length > 0 && jastipTripId) {
-     const trip = await prisma.jastipTrip.findUnique({ where: { id: jastipTripId } });
+     const trip = await (await getPrisma()).jastipTrip.findUnique({ where: { id: jastipTripId } });
      if (!trip || !trip.is_active || (trip.po_close_date && new Date() > trip.po_close_date)) {
        throw new Error("PO Jastip sudah ditutup.");
      }
   }
 
   // 8. Create Order
-  const order = await prisma.order.create({
+  const order = await (await getPrisma()).order.create({
     data: {
       id: orderId,
       userId: user.id,

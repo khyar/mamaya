@@ -1,0 +1,3 @@
+module.exports=[81571,a=>{"use strict";var b=a.i(87924),c=a.i(70102);a.s(["default",0,function({product:a}){let d=(0,c.useCartStore)(a=>a.addToCart);return(0,b.jsx)("button",{onClick:()=>d({id:a.id,domain:"food",name:a.name,price:a.price,category:a.category||"food",image:a.image||void 0,batchId:a.batchId||void 0}),className:"bg-primary text-white px-4 py-2 rounded font-medium text-sm hover:bg-primary-active transition-colors",children:"+ Keranjang"})}])}];
+
+//# sourceMappingURL=components_AddToCartButton_tsx_0nc16bf._.js.map

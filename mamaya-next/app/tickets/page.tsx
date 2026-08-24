@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import prisma from '@/lib/prisma';
+import { getPrisma } from '@/lib/prisma';
 
 export default async function TicketsPage() {
-  const events = await prisma.ticketEvent.findMany({
+  const events = await (await getPrisma()).ticketEvent.findMany({
     where: { is_active: true }
   });
 
