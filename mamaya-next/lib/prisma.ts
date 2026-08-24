@@ -1,11 +1,20 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client/web'
+import { getCloudflareContext } from '@opennextjs/cloudflare'
 
 const getEnv = (key: string) => {
+  try {
+    const { env } = getCloudflareContext();
+    if (env && env[key]) return env[key] as string;
+  } catch (e) {}
+
   if (typeof process !== 'undefined') {
     const env = process['env'];
     if (env) return env[key] || '';
+  }
+  if (globalThis.process?.env?.[key]) {
+    return globalThis.process.env[key] || '';
   }
   return '';
 };
