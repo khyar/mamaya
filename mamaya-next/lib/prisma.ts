@@ -2,10 +2,18 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client/web'
 
+const getEnv = (key: string) => {
+  if (typeof process !== 'undefined') {
+    const env = process['env'];
+    if (env) return env[key] || '';
+  }
+  return '';
+};
+
 const prismaClientSingleton = () => {
   const libsql = createClient({
-    url: process.env.TURSO_DATABASE_URL || process.env.DATABASE_URL || '',
-    authToken: process.env.TURSO_AUTH_TOKEN || ''
+    url: getEnv('TURSO_DATABASE_URL') || getEnv('DATABASE_URL'),
+    authToken: getEnv('TURSO_AUTH_TOKEN')
   })
   const adapter = new PrismaLibSql(libsql as any)
   return new PrismaClient({ adapter })
