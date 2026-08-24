@@ -19,7 +19,7 @@ export interface CartItem {
 
 interface CartState {
   items: CartItem[];
-  addToCart: (product: Omit<CartItem, 'quantity'>) => void;
+  addToCart: (product: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
   removeFromCart: (id: string) => void;
   increaseQuantity: (id: string) => void;
   decreaseQuantity: (id: string) => void;

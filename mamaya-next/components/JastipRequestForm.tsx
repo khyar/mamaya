@@ -44,7 +44,7 @@ export default function JastipRequestForm({ trip }: { trip: any }) {
              image: cat.image || undefined,
              category: 'jastip',
              jastipTripId: trip.id,
-             quantity: quantity as any
+             quantity: quantity
           });
        }
     });
@@ -59,7 +59,7 @@ export default function JastipRequestForm({ trip }: { trip: any }) {
           category: 'jastip',
           jastipTripId: trip.id,
           isCustomRequest: true,
-          quantity: 1 as any
+          quantity: 1
        });
        // Save request note in localStorage so it can be retrieved by CartWidget
        const existingNotes = localStorage.getItem('mamaya_jastip_notes') || '';
