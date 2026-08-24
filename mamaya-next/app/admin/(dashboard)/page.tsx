@@ -1,22 +1,72 @@
 import { getPrisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
+import DashboardCharts from './DashboardCharts';
+import RecentActivity from './RecentActivity';
 
 export default async function AdminDashboardPage() {
   const session = await getAdminSession();
 
-  // Basic stats
-  const totalOrders = await (await getPrisma()).order.count();
-  const pendingOrders = await (await getPrisma()).order.count({ where: { status: 'awaiting_payment' } });
-  const processingOrders = await (await getPrisma()).order.count({ where: { status: 'processing' } });
-  const completedOrders = await (await getPrisma()).order.count({ where: { status: 'completed' } });
+  const prisma = await getPrisma();
 
-  // Income sum (from completed orders)
-  const completedStats = await (await getPrisma()).order.aggregate({
+  // Basic stats
+  const pendingOrders = await prisma.order.count({ where: { status: 'awaiting_payment' } });
+  const processingOrders = await prisma.order.count({ where: { status: 'processing' } });
+  const completedOrders = await prisma.order.count({ where: { status: 'completed' } });
+
+  const completedStats = await prisma.order.aggregate({
     where: { status: 'completed' },
     _sum: { grand_total: true, subtotal: true }
   });
   
   const totalIncome = completedStats._sum.grand_total || completedStats._sum.subtotal || 0;
+
+  // Recent 5 Orders
+  const recentOrders = await prisma.order.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 5
+  });
+
+  // Calculate Weekly Data (Last 7 Days)
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+
+  const recentCompletedOrders = await prisma.order.findMany({
+    where: {
+      status: 'completed',
+      createdAt: { gte: sevenDaysAgo }
+    }
+  });
+
+  const weeklyData = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toLocaleDateString('id-ID', { weekday: 'short' });
+    
+    const dayTotal = recentCompletedOrders
+      .filter(o => new Date(o.createdAt).toDateString() === d.toDateString())
+      .reduce((sum, o) => sum + (o.grand_total || o.subtotal || 0), 0);
+      
+    weeklyData.push({ date: dateStr, total: dayTotal });
+  }
+
+  // Calculate Order Composition Data (All Time Completed)
+  const allCompletedOrders = await prisma.order.findMany({
+    where: { status: 'completed' }
+  });
+
+  const foodTotal = allCompletedOrders.filter(o => o.order_type === 'food').reduce((sum, o) => sum + (o.grand_total || o.subtotal || 0), 0);
+  const ticketTotal = allCompletedOrders.filter(o => o.order_type === 'ticket').reduce((sum, o) => sum + (o.grand_total || o.subtotal || 0), 0);
+  const jastipTotal = allCompletedOrders.filter(o => o.order_type === 'jastip').reduce((sum, o) => sum + (o.grand_total || o.subtotal || 0), 0);
+  const mixedTotal = allCompletedOrders.filter(o => o.order_type === 'mixed').reduce((sum, o) => sum + (o.grand_total || o.subtotal || 0), 0);
+
+  const compositionData = [
+    { name: 'Food', value: foodTotal },
+    { name: 'Ticket', value: ticketTotal },
+    { name: 'Jastip', value: jastipTotal },
+    { name: 'Mixed', value: mixedTotal }
+  ].filter(item => item.value > 0);
 
   return (
     <div>
@@ -30,10 +80,10 @@ export default async function AdminDashboardPage() {
         <StatCard title="Total Pendapatan" value={`Rp ${totalIncome.toLocaleString('id-ID')}`} type="primary" />
       </div>
 
-      <div className="bg-surface border border-hairline rounded-xl p-6 shadow-sm">
-         <h2 className="text-xl font-bold text-ink mb-4">Aktivitas Terakhir</h2>
-         <p className="text-muted text-sm">Dashboard ini masih dalam pengembangan awal. Buka menu <b>Pesanan</b> untuk melihat daftar pesanan secara lengkap.</p>
-      </div>
+      {/* Advanced Dashboard Components */}
+      <DashboardCharts weeklyData={weeklyData} compositionData={compositionData} />
+      
+      <RecentActivity recentOrders={recentOrders} />
     </div>
   );
 }
