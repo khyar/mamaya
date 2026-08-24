@@ -10,5 +10,8 @@
   },
   "observability": {
     "enabled": true
+  },
+  "vars": {
+    "TURSO_DATABASE_URL": "libsql://mamaya-mamaya.aws-ap-northeast-1.turso.io"
   }
 }
