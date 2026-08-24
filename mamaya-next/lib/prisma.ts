@@ -2,11 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 
-let cachedPrisma: any = null;
-
 export const getPrisma = async () => {
-  if (cachedPrisma) return cachedPrisma;
-
   let url = '';
   let authToken = '';
 
@@ -41,15 +37,15 @@ export const getPrisma = async () => {
     process.env['TURSO_AUTH_TOKEN'] = authToken;
   }
   
+  // Dalam Cloudflare Workers, instance klien HTTP (seperti fetch yang digunakan libsql) 
+  // terikat pada Request Context. Menyimpan PrismaClient di cache global akan menyebabkan 
+  // error "Cannot perform I/O on behalf of a different request".
+  // Oleh karena itu, kita harus meng-instansiasi PrismaClient baru di setiap pemanggilan.
   const adapter = new PrismaLibSql({
     url: url as string,
     authToken: authToken as string
   });
   
-  cachedPrisma = new PrismaClient({ adapter });
-  return cachedPrisma;
+  return new PrismaClient({ adapter });
 };
 
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.prismaGlobal = cachedPrisma;
-}
