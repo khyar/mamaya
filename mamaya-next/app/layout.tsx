@@ -5,6 +5,9 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CartWidget from "@/components/CartWidget";
 
+export const runtime = 'edge';
+export const dynamic = 'force-dynamic';
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
