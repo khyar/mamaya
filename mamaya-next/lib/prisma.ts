@@ -12,18 +12,14 @@ export const getPrisma = async () => {
 
   try {
     const ctx = await getCloudflareContext({ async: true });
-    console.log("=== CLOUDFLARE CONTEXT ===");
-    console.log("Keys in env:", ctx?.env ? Object.keys(ctx.env) : "no env object");
     url = ctx.env.TURSO_DATABASE_URL || ctx.env.DATABASE_URL || '';
     authToken = (ctx.env.TURSO_AUTH_TOKEN || '') as string;
-    console.log("URL from ctx.env:", url ? "FOUND" : "NOT FOUND", "Value:", url, "Type:", typeof url);
   } catch (e) {
-    console.error("Cloudflare context failed, fallback to global", e);
+    // Cloudflare context failed, fallback to global
   }
 
   if (!url && typeof process !== 'undefined') {
     const processEnv = process['env'];
-    console.log("Keys in process.env:", processEnv ? Object.keys(processEnv) : "no process.env");
     if (processEnv) {
       url = processEnv['TURSO_DATABASE_URL'] || processEnv['DATABASE_URL'] || '';
       authToken = processEnv['TURSO_AUTH_TOKEN'] || '';
@@ -35,9 +31,8 @@ export const getPrisma = async () => {
     authToken = globalThis.process.env['TURSO_AUTH_TOKEN'] || '';
   }
 
-  console.log("createClient called with URL:", url, "Type:", typeof url);
   if (!url) {
-    throw new Error("FATAL: Database URL is missing! Please make sure TURSO_DATABASE_URL is set in your Cloudflare environment variables/secrets.");
+    throw new Error("Database URL is missing. Please ensure environment variables are configured.");
   }
   
   if (typeof process !== 'undefined' && process.env) {
@@ -46,18 +41,13 @@ export const getPrisma = async () => {
     process.env['TURSO_AUTH_TOKEN'] = authToken;
   }
   
-  try {
-    const adapter = new PrismaLibSql({
-      url: url as string,
-      authToken: authToken as string
-    });
-    
-    cachedPrisma = new PrismaClient({ adapter });
-    return cachedPrisma;
-  } catch (error: any) {
-    console.error("Prisma Initialization Error:", error);
-    throw new Error(`Prisma Init Error: ${error.message} | URL: ${url ? 'Found' : 'Missing'}`);
-  }
+  const adapter = new PrismaLibSql({
+    url: url as string,
+    authToken: authToken as string
+  });
+  
+  cachedPrisma = new PrismaClient({ adapter });
+  return cachedPrisma;
 };
 
 if (process.env.NODE_ENV !== 'production') {
